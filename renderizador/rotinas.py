@@ -150,35 +150,25 @@ def triangleSet2D(vertices, colors):
                 lowerY = int(y)
 
         #encontra o primeiro pixel a ser pintado
-        notFound = True
-        quebrou = False
-        while notFound:
+        notDone = True
+        while notDone:
             if starter[1] < lowerY:
-                quebrou = True
+                notDone = True
                 break
                 
             if TaDentro(x1, y1, x2, y2, x3, y3, starter[0], starter[1]):
-                notFound = False
                 gpu.GPU.set_pixel(starter[0], starter[1], r, g, b)
-                break
 
             starterX = starter[0] -1
             while starterX >= lowerX:
                 if TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1]):
-                    notFound = False
                     gpu.GPU.set_pixel(starterX, starter[1], r, g, b)
-                    break
                 starterX -= 1
 
-            if notFound == False:
-                break
-            starterX = starter[0] +1
 
             while starterX <= higherX:
                 if TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1]):
-                    notFound = False
                     gpu.GPU.set_pixel(starterX, starter[1], r, g, b)
-                    break
                 starterX += 1
 
             starter[1] = starter[1]-1
