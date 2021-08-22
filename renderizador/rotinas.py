@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
 """
@@ -10,6 +10,7 @@ Data:
 """
 
 import gpu          # Simula os recursos de uma GPU
+import numpy as np
 
 #################################################################################
 # NÃO USAR MAIS ESSE ARQUIVO. AS ROTINAS DEVEM SER IMPLEMENTADAS AGORA NO gl.GL #
@@ -25,13 +26,19 @@ def polypoint2D(point, colors):
     # pelo tamanho da lista e assuma que sempre vira uma quantidade par de valores.
     # O parâmetro colors é um dicionário com os tipos cores possíveis, para o Polypoint2D
     # você pode assumir o desenho dos pontos com a cor emissiva (emissiveColor).
-
-    # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-    print("Polypoint2D : pontos = {0}".format(point)) # imprime no terminal pontos
-    print("Polypoint2D : colors = {0}".format(colors)) # imprime no terminal as cores
-    # Exemplo:
-    gpu.GPU.set_pixel(3, 1, 255, 0, 0) # altera um pixel da imagem (u, v, r, g, b)
-    # cuidado com as cores, o X3D especifica de (0,1) e o Framebuffer de (0,255)
+    
+    # Transforma as cores normalizadas (0-1) para janela rgb (0-255)
+    r = round((colors['emissiveColor'][0])*255)
+    g = round((colors['emissiveColor'][1])*255)
+    b = round((colors['emissiveColor'][2])*255)
+    
+    # Para cada coordenada desenha um ponto
+    for i in range(0,len(point),2):
+        
+        # Sempre arredonda pra baixo (Para pegar o centro de pixel mais próximo do ponto)
+        xi = int(point[i])
+        yi = int(point[i+1])
+        gpu.GPU.set_pixel(xi, yi, r, g, b) # altera um pixel da imagem (u, v, r, g, b)
 
 # web3d.org/documents/specifications/19775-1/V3.0/Part01/components/geometry2D.html#Polyline2D
 def polyline2D(lineSegments, colors):
@@ -45,14 +52,61 @@ def polyline2D(lineSegments, colors):
     # vira uma quantidade par de valores.
     # O parâmetro colors é um dicionário com os tipos cores possíveis, para o Polyline2D
     # você pode assumir o desenho das linhas com a cor emissiva (emissiveColor).
-
-    print("Polyline2D : lineSegments = {0}".format(lineSegments)) # imprime no terminal
-    print("Polyline2D : colors = {0}".format(colors)) # imprime no terminal as cores
-    # Exemplo:
-    pos_x = gpu.GPU.width//2
-    pos_y = gpu.GPU.height//2
-    gpu.GPU.set_pixel(pos_x, pos_y, 255, 0, 0) # altera um pixel da imagem (u, v, r, g, b)
-
+    
+    # Transforma as cores normalizadas (0-1) para janela rgb (0-255)
+    r = round((colors['emissiveColor'][0])*255)
+    g = round((colors['emissiveColor'][1])*255)
+    b = round((colors['emissiveColor'][2])*255)
+    
+    # Desenha uma linha entre cada par de pontos
+    for i in range(0,len(lineSegments)-2,2):
+        
+        x0 = lineSegments[i]
+        y0 = lineSegments[i + 1]
+        
+        x1 = lineSegments[i + 2]
+        y1 = lineSegments[i + 3]
+        
+        # Se a linha é vertical, pintar iterando entre os ys (Coeficiente angular é infinito)
+        if int(x0) == int(x1):
+            
+            y0 = int(y0)
+            y1 = int(y1)
+            xref = int(x0)
+            
+            step = 1
+            
+            if y0>y1:
+                step = -step
+            
+            for y in range(y0,y1+step,step):
+                gpu.GPU.set_pixel(xref, int(y), r, g, b) # altera um pixel da imagem (u, v, r, g, b)
+            
+        else:  
+            # Equação da reta
+            # y = ax + b
+            a = (y1-y0)/(x1-x0)
+            b = y1 - a*x1
+            
+            # Passo relativo a inclinação da reta
+            if a == 0: # Se a linha for horizonal, usa passo de 1 unidade
+                step = 1
+            else:
+                step = 1/abs(a)
+                
+                # Caso a inclinação seja muito pequena, utiliza 1 unidade como passo
+                if step>1:
+                    step = 1
+                    
+            # Caso x inicial seja maior que o x final, utiliza um passo negatico (limitação do np.arange)
+            if x0>x1:
+                step = -step
+            
+            # A cada passo entre o ponto p0 e p1, calcula o valor do ponto, arredonda pra baixo e pinta
+            for x in np.arange(x0,x1+step/2,step):
+                y = a*x + b
+                gpu.GPU.set_pixel(int(x), int(y), r, g, b) # altera um pixel da imagem (u, v, r, g, b)
+                
 # web3d.org/documents/specifications/19775-1/V3.0/Part01/components/geometry2D.html#TriangleSet2D
 def triangleSet2D(vertices, colors):
     """Função usada para renderizar TriangleSet2D."""
