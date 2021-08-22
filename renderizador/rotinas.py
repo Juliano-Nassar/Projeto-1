@@ -11,6 +11,8 @@ Data:
 
 import gpu          # Simula os recursos de uma GPU
 import numpy as np
+from auxiliares import Area
+from auxiliares import TaDentro
 
 #################################################################################
 # NÃO USAR MAIS ESSE ARQUIVO. AS ROTINAS DEVEM SER IMPLEMENTADAS AGORA NO gl.GL #
@@ -117,6 +119,94 @@ def triangleSet2D(vertices, colors):
     # quantidade de pontos é sempre multiplo de 3, ou seja, 6 valores ou 12 valores, etc.
     # O parâmetro colors é um dicionário com os tipos cores possíveis, para o TriangleSet2D
     # você pode assumir o desenho das linhas com a cor emissiva (emissiveColor).
+    r = round((colors['emissiveColor'][0])*255)
+    g = round((colors['emissiveColor'][1])*255)
+    b = round((colors['emissiveColor'][2])*255)
+    # Desenha uma linha entre cada par de pontos
+    for i in range(0,len(vertices),6):
+        x1 = vertices[i]
+        y1 = vertices[i+1]
+        x2 = vertices[i+2]
+        y2 = vertices[i+3]
+        x3 = vertices[i+4]
+        y3 = vertices[i+5]
+        pixelList = [vertices[i],vertices[i+1],vertices[i+2],vertices[i+3],vertices[i+4],vertices[i+5]]
+
+        # Encontra limites do triângulo, assim como pixel inicial
+        starter = [int(x1),int(y1)]
+        lowerX = int(x1)
+        higherX = int(x1)
+        lowerY = int(y1)
+        for j in range(2,5,2) :
+            x = int(pixelList[j])
+            y = int(pixelList[j+1])
+            if x > higherX:
+                higherX = int(x)
+            if x < lowerX:
+                lowerX = int(x)
+            if y > starter[1]:
+                starter = [int(x),int(y)]
+            if y < lowerY:
+                lowerY = int(y)
+
+        #encontra o primeiro pixel a ser pintado
+        notFound = True
+        quebrou = False
+        while notFound:
+            if starter[1] < lowerY:
+                quebrou = True
+                break
+                
+            if TaDentro(x1, y1, x2, y2, x3, y3, starter[0], starter[1]):
+                notFound = False
+                gpu.GPU.set_pixel(starter[0], starter[1], r, g, b)
+                break
+
+            starterX = starter[0] -1
+            while starterX >= lowerX:
+                if TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1]):
+                    notFound = False
+                    gpu.GPU.set_pixel(starterX, starter[1], r, g, b)
+                    break
+                starterX -= 1
+
+            if notFound == False:
+                break
+            starterX = starter[0] +1
+
+            while starterX <= higherX:
+                if TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1]):
+                    notFound = False
+                    gpu.GPU.set_pixel(starterX, starter[1], r, g, b)
+                    break
+                starterX += 1
+
+            starter[1] = starter[1]-1
+
+
+    # Procura do pixel inicial
+    # starter = [0,0]
+    # lowerPixel = "p0"
+    # if y1 > starter[1] :
+    #     starter = [int(x1),int(y1)]
+    #     lowerPixel = "p1"
+    # if y2 > starter[1] : 
+    #     starter = [int(x2),int(y2)]
+    #     lowerPixel = "p3"
+    # if y3 > starter[1]:
+    #     starter = [int(x3),int(y3)]
+    #     lowerPixel = "p3"
+
+    # Procura primeiro pixel a ser pintado
+
+    # x=23
+    # y=18
+    # if TaDentro(x1, y1, x2, y2, x3, y3, x, y) :
+    #     print("juliano eu sou um monstro")
+    #     gpu.GPU.set_pixel(int(x), int(y), r, g, b)
+
+
+
     print("TriangleSet2D : vertices = {0}".format(vertices)) # imprime no terminal
     print("TriangleSet2D : colors = {0}".format(colors)) # imprime no terminal as cores
     # Exemplo:
