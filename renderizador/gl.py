@@ -14,6 +14,9 @@ Data:
 import time         # Para operações com tempo
 
 import gpu          # Simula os recursos de uma GPU
+import numpy as np
+from methods import Quaternio, Vector
+
 
 class GL:
     """Classe que representa a biblioteca gráfica (Graphics Library)."""
@@ -60,6 +63,7 @@ class GL:
         # perspectiva para poder aplicar nos pontos dos objetos geométricos.
 
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
+        
         print("Viewpoint : ", end='')
         print("position = {0} ".format(position), end='')
         print("orientation = {0} ".format(orientation), end='')
@@ -77,14 +81,22 @@ class GL:
         # modelos do mundo em alguma estrutura de pilha.
 
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("Transform : ", end='')
+
         if translation:
-            print("translation = {0} ".format(translation), end='') # imprime no terminal
+            GL.M_T = np.matrix([[0,0,0,translation[0]],
+                                [0,0,0,translation[1]],
+                                [0,0,0,translation[2]],
+                                [0,0,0,      1      ]])
+            
         if scale:
-            print("scale = {0} ".format(scale), end='') # imprime no terminal
+            GL.M_S = np.matrix([[scale[0],0,0,0],
+                                [0,scale[1],0,0],
+                                [0,0,scale[2],0],
+                                [0,0,   0,    0]])
+            
         if rotation:
-            print("rotation = {0} ".format(rotation), end='') # imprime no terminal
-        print("")
+            q = Quaternio(angle = rotation[-1], axis = rotation[:3])
+            GL.M_R = q.rotation_matrix().v
 
     @staticmethod
     def transform_out():

@@ -156,19 +156,22 @@ def triangleSet2D(vertices, colors):
                 notDone = True
                 break
                 
-            if TaDentro(x1, y1, x2, y2, x3, y3, starter[0], starter[1]):
-                gpu.GPU.set_pixel(starter[0], starter[1], r, g, b)
+            color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starter[0], starter[1])
+            if color_lv > 0:
+                gpu.GPU.set_pixel(starter[0], starter[1], int(r*color_lv), int(g*color_lv), int(b*color_lv))
 
             starterX = starter[0] -1
-            while starterX >= lowerX:
-                if TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1]):
-                    gpu.GPU.set_pixel(starterX, starter[1], r, g, b)
+            while starterX >= lowerX:        
+                color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1])            
+                if color_lv > 0:
+                    gpu.GPU.set_pixel(starterX, starter[1], int(r*color_lv), int(g*color_lv), int(b*color_lv))
                 starterX -= 1
 
 
             while starterX <= higherX:
-                if TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1]):
-                    gpu.GPU.set_pixel(starterX, starter[1], r, g, b)
+                color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1])            
+                if color_lv > 0:
+                    gpu.GPU.set_pixel(starterX, starter[1], int(r*color_lv), int(g*color_lv), int(b*color_lv))
                 starterX += 1
 
             starter[1] = starter[1]-1
