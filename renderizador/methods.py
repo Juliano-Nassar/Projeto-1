@@ -17,7 +17,7 @@ class Vector:
         
     def __mul__(self, v2):
         v = v2.v
-        result = self.v.dot(v)
+        result = np.matmul(self.v, v)
         return Vector(result)
     
     def __rmul__(self, n):

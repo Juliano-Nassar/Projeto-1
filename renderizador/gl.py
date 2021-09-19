@@ -31,6 +31,7 @@ class GL:
         """Definr parametros para câmera de razão de aspecto, plano próximo e distante."""
         GL.width = width
         GL.height = height
+        GL.ascpect = width/height
         GL.near = near
         GL.far = far
 
@@ -64,6 +65,39 @@ class GL:
 
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         
+        # Matriz para transformar a posição dos objetos do mundo para a posição em relação a câmera
+        # O inverso de um rotação é a rotação para o lado contrário
+        q = Quaternio(angle = -orientation[-1], axis = orientation[:3])
+        GL.camera_M_R = q.rotation_matrix().v
+        
+        # O inverso de uma translação é uma translação com sinais trocados em x,y e z
+        GL.camera_M_T = np.matrix([[0,0,0,-position[0]],
+                                   [0,0,0,-position[1]],
+                                   [0,0,0,-position[2]],
+                                   [0,0,0,      1   ]])
+                                   
+        GL.Look_At = np.matmul(GL.camera_M_R,GL.camera_M_T)
+        
+        print(GL.Look_At)
+        
+        
+        # FOVy e matriz de perspectiva
+        FOVd = fieldOfView
+        GL.FOVd = FOVd
+        GL.FOVy = 2*np.arctan(np.tan(FOVd/2)*(GL.height/(np.sqrt(GL.height**2+GL.width**2))))
+        
+        
+        GL.top = GL.near*np.tan(GL.FOVy)
+        GL.bottom = -GL.top
+        GL.right = GL.top*GL.ascpect
+        GL.left = -GL.right
+        
+        # Matriz perspectiva
+        GL.camera_M_P = np.matrix([[GL.near/GL.right,0,0,0],
+                                   [0,GL.near/GL.top,0,0],
+                                   [0,0,-(GL.far+GL.near)/(GL.far-GL.near),-2*GL.far*GL.near/(GL.far-GL.near)],
+                                   [0,0,-1,0]])
+        print(GL.camera_M_P)
         print("Viewpoint : ", end='')
         print("position = {0} ".format(position), end='')
         print("orientation = {0} ".format(orientation), end='')
