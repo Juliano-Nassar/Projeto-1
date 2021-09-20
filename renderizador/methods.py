@@ -13,7 +13,7 @@ import numpy as np
 # Vector class
 class Vector:
     def __init__(self,vector):  
-        self.v = np.matrix(vector)
+        self.v = np.array(vector)
         
     def __mul__(self, v2):
         v = v2.v

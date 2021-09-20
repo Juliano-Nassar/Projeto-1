@@ -34,7 +34,7 @@ class GL:
         GL.ascpect = width/height
         GL.near = near
         GL.far = far
-
+        GL.stack = []
     @staticmethod
     def triangleSet(point, colors):
         """Função usada para renderizar TriangleSet."""
@@ -48,6 +48,32 @@ class GL:
         # triângulo, e assim por diante.
         # O parâmetro colors é um dicionário com os tipos cores possíveis, para o TriangleSet
         # você pode assumir o desenho das linhas com a cor emissiva (emissiveColor).
+        print("SETTTTTTTTTTTTTTTTTT")
+        for i in range(0,len(point)-9,9):
+            tri = []
+            tri.append([point[i],point[i+3],point[i+6]])
+            tri.append([point[i+1],point[i+4],point[i+7]])
+            tri.append([point[i+2],point[i+5],point[i+8]])
+            tri.append([1,1,1])
+            tri_M = np.array(tri)
+            print("aaaaaaaaaaaaaa")
+            print(tri_M)
+            for j in GL.stack:
+                #print("AAAAAAAAAAAAAAAAAAAAAAA")
+                print(j)
+                tri_M = np.matmul(j,tri_M)
+                print(tri_M)
+                
+            #print(tri_M)
+            tri_M = np.matmul(GL.Look_At,tri_M)
+            #print(GL.Look_At)
+            tri_M = np.matmul(GL.camera_M_P,tri_M)
+            #print(tri_M)
+            #print("BBBBBBBBBBBBBBBBBBB")
+            #print(tri_M)
+            #tri_M = tri_M / tri_M[-1][0]
+            #print(tri_M)
+
 
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         print("TriangleSet : pontos = {0}".format(point)) # imprime no terminal pontos
@@ -63,22 +89,22 @@ class GL:
         # câmera virtual. Use esses dados para poder calcular e criar a matriz de projeção
         # perspectiva para poder aplicar nos pontos dos objetos geométricos.
 
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        
+        # O print abaixo é só par"a vocês verificarem o funcionamento, DEVE SER REMOVIDO.
+        print("VIEWPOINT!!!!!!!!!")
         # Matriz para transformar a posição dos objetos do mundo para a posição em relação a câmera
         # O inverso de um rotação é a rotação para o lado contrário
         q = Quaternio(angle = -orientation[-1], axis = orientation[:3])
         GL.camera_M_R = q.rotation_matrix().v
         
         # O inverso de uma translação é uma translação com sinais trocados em x,y e z
-        GL.camera_M_T = np.matrix([[0,0,0,-position[0]],
+        GL.camera_M_T = np.array([[0,0,0,-position[0]],
                                    [0,0,0,-position[1]],
                                    [0,0,0,-position[2]],
                                    [0,0,0,      1   ]])
                                    
         GL.Look_At = np.matmul(GL.camera_M_R,GL.camera_M_T)
         
-        print(GL.Look_At)
+        #print(GL.Look_At)
         
         
         # FOVy e matriz de perspectiva
@@ -93,11 +119,11 @@ class GL:
         GL.left = -GL.right
         
         # Matriz perspectiva
-        GL.camera_M_P = np.matrix([[GL.near/GL.right,0,0,0],
+        GL.camera_M_P = np.array([[GL.near/GL.right,0,0,0],
                                    [0,GL.near/GL.top,0,0],
                                    [0,0,-(GL.far+GL.near)/(GL.far-GL.near),-2*GL.far*GL.near/(GL.far-GL.near)],
                                    [0,0,-1,0]])
-        print(GL.camera_M_P)
+        #print(GL.camera_M_P)
         print("Viewpoint : ", end='')
         print("position = {0} ".format(position), end='')
         print("orientation = {0} ".format(orientation), end='')
@@ -113,35 +139,40 @@ class GL:
         # do objeto ao redor do eixo x, y, z por t radianos, seguindo a regra da mão direita.
         # Quando se entrar em um nó transform se deverá salvar a matriz de transformação dos
         # modelos do mundo em alguma estrutura de pilha.
-
+        print("ENTREI NO TRANFORM IN")
+        M_I = np.array([[1,0,0,0],
+                        [0,1,0,0],
+                        [0,0,1,0],
+                        [0,0,0,1]])
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-
         if translation:
-            GL.M_T = np.matrix([[0,0,0,translation[0]],
+            M_T = np.array([[0,0,0,translation[0]],
                                 [0,0,0,translation[1]],
                                 [0,0,0,translation[2]],
                                 [0,0,0,      1      ]])
-            
+            M_I = np.matmul(M_T,M_I)
         if scale:
-            GL.M_S = np.matrix([[scale[0],0,0,0],
+            M_S = np.array([[scale[0],0,0,0],
                                 [0,scale[1],0,0],
                                 [0,0,scale[2],0],
                                 [0,0,   0,    0]])
-            
+            M_I = np.matmul(M_S,M_I)
         if rotation:
             q = Quaternio(angle = rotation[-1], axis = rotation[:3])
-            GL.M_R = q.rotation_matrix().v
-
+            M_R = q.rotation_matrix().v
+            M_I = np.matmul(M_R,M_I)
+        GL.stack.append(M_I)
     @staticmethod
     def transform_out():
+        print("OUTTTTTTTTT!!!")
         """Função usada para renderizar (na verdade coletar os dados) de Transform."""
         # A função transform_out será chamada quando se sair em um nó X3D do tipo Transform do
         # grafo de cena. Não são passados valores, porém quando se sai de um nó transform se
         # deverá recuperar a matriz de transformação dos modelos do mundo da estrutura de
         # pilha implementada.
-
+        GL.stack.pop()
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("Saindo de Transform")
+        #print("Saindo de Transform")
 
     @staticmethod
     def triangleStripSet(point, stripCount, colors):
