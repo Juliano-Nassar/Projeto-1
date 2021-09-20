@@ -175,32 +175,3 @@ def triangleSet2D(vertices, colors):
                 starterX += 1
 
             starter[1] = starter[1]-1
-
-
-    # Procura do pixel inicial
-    # starter = [0,0]
-    # lowerPixel = "p0"
-    # if y1 > starter[1] :
-    #     starter = [int(x1),int(y1)]
-    #     lowerPixel = "p1"
-    # if y2 > starter[1] : 
-    #     starter = [int(x2),int(y2)]
-    #     lowerPixel = "p3"
-    # if y3 > starter[1]:
-    #     starter = [int(x3),int(y3)]
-    #     lowerPixel = "p3"
-
-    # Procura primeiro pixel a ser pintado
-
-    # x=23
-    # y=18
-    # if TaDentro(x1, y1, x2, y2, x3, y3, x, y) :
-    #     print("juliano eu sou um monstro")
-    #     gpu.GPU.set_pixel(int(x), int(y), r, g, b)
-
-
-
-    print("TriangleSet2D : vertices = {0}".format(vertices)) # imprime no terminal
-    print("TriangleSet2D : colors = {0}".format(colors)) # imprime no terminal as cores
-    # Exemplo:
-    gpu.GPU.set_pixel(24, 8, 255, 255, 0) # altera um pixel da imagem (u, v, r, g, b)

@@ -16,7 +16,7 @@ import time         # Para operações com tempo
 import gpu          # Simula os recursos de uma GPU
 import numpy as np
 from methods import Quaternio, Vector
-
+from auxiliares import *
 
 class GL:
     """Classe que representa a biblioteca gráfica (Graphics Library)."""
@@ -26,6 +26,75 @@ class GL:
     near = 0.01   # plano de corte próximo
     far = 1000    # plano de corte distante
 
+
+
+    def triangleSet2D(vertices, colors):
+        """Função usada para renderizar TriangleSet2D."""
+        # Nessa função você receberá os vertices de um triângulo no parâmetro vertices,
+        # esses pontos são uma lista de pontos x, y sempre na ordem. Assim point[0] é o
+        # valor da coordenada x do primeiro ponto, point[1] o valor y do primeiro ponto.
+        # Já point[2] é a coordenada x do segundo ponto e assim por diante. Assuma que a
+        # quantidade de pontos é sempre multiplo de 3, ou seja, 6 valores ou 12 valores, etc.
+        # O parâmetro colors é um dicionário com os tipos cores possíveis, para o TriangleSet2D
+        # você pode assumir o desenho das linhas com a cor emissiva (emissiveColor).
+        r = round((colors['diffuseColor'][0])*255)
+        g = round((colors['diffuseColor'][1])*255)
+        b = round((colors['diffuseColor'][2])*255)
+        print(r,g,b)
+        # Desenha uma linha entre cada par de pontos
+        for i in range(0,len(vertices),6):
+            x1 = vertices[i]
+            y1 = vertices[i+1]
+            x2 = vertices[i+2]
+            y2 = vertices[i+3]
+            x3 = vertices[i+4]
+            y3 = vertices[i+5]
+            pixelList = [vertices[i],vertices[i+1],vertices[i+2],vertices[i+3],vertices[i+4],vertices[i+5]]
+
+            # Encontra limites do triângulo, assim como pixel inicial
+            starter = [int(x1),int(y1)]
+            lowerX = int(x1)
+            higherX = int(x1)
+            lowerY = int(y1)
+            for j in range(2,5,2) :
+                x = int(pixelList[j])
+                y = int(pixelList[j+1])
+                if x > higherX:
+                    higherX = int(x)
+                if x < lowerX:
+                    lowerX = int(x)
+                if y > starter[1]:
+                    starter = [int(x),int(y)]
+                if y < lowerY:
+                    lowerY = int(y)
+
+            #encontra o primeiro pixel a ser pintado
+            notDone = True
+            while notDone:
+                if starter[1] < lowerY:
+                    notDone = True
+                    break
+                    
+                color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starter[0], starter[1])
+                if color_lv > 0:
+                    gpu.GPU.draw_pixels([starter[0], starter[1]], gpu.GPU.RGB8, [int(r*color_lv), int(g*color_lv), int(b*color_lv)])
+
+                starterX = starter[0] -1
+                while starterX >= lowerX:        
+                    color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1])            
+                    if color_lv > 0:
+                        gpu.GPU.draw_pixels([starterX, starter[1]], gpu.GPU.RGB8, [int(r*color_lv), int(g*color_lv), int(b*color_lv)])
+                    starterX -= 1
+
+
+                while starterX <= higherX:
+                    color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1])            
+                    if color_lv > 0:
+                        gpu.GPU.draw_pixels([starterX, starter[1]], gpu.GPU.RGB8, [int(r*color_lv), int(g*color_lv), int(b*color_lv)])
+                    starterX += 1
+
+                starter[1] = starter[1]-1
+            
     @staticmethod
     def setup(width, height, near=0.01, far=1000):
         """Definr parametros para câmera de razão de aspecto, plano próximo e distante."""
@@ -49,31 +118,36 @@ class GL:
         # O parâmetro colors é um dicionário com os tipos cores possíveis, para o TriangleSet
         # você pode assumir o desenho das linhas com a cor emissiva (emissiveColor).
         print("SETTTTTTTTTTTTTTTTTT")
-        for i in range(0,len(point)-9,9):
+        for i in range(0,len(point)-8,9):
             tri = []
             tri.append([point[i],point[i+3],point[i+6]])
             tri.append([point[i+1],point[i+4],point[i+7]])
             tri.append([point[i+2],point[i+5],point[i+8]])
             tri.append([1,1,1])
             tri_M = np.array(tri)
-            print("aaaaaaaaaaaaaa")
-            print(tri_M)
+            
+            # Transformações objeto-mundo
             for j in GL.stack:
-                #print("AAAAAAAAAAAAAAAAAAAAAAA")
-                print(j)
-                tri_M = np.matmul(j,tri_M)
-                print(tri_M)
                 
-            #print(tri_M)
+                tri_M = np.matmul(j,tri_M)
+            
+            # Transformações Mundo-camera
             tri_M = np.matmul(GL.Look_At,tri_M)
-            #print(GL.Look_At)
+            
+            # Transformações perspectiva
             tri_M = np.matmul(GL.camera_M_P,tri_M)
-            #print(tri_M)
-            #print("BBBBBBBBBBBBBBBBBBB")
-            #print(tri_M)
-            #tri_M = tri_M / tri_M[-1][0]
-            #print(tri_M)
-
+            
+            # Transformações NDC
+            tri_M = tri_M/tri_M[-1]
+            
+            # Transformaões mapping tela
+            tri_M = np.matmul(GL.tela_M,tri_M)
+            
+            # Lista de pontos x,y
+            tri_M = tri_M[:2,:].T.flatten().tolist()
+            
+            
+            GL.triangleSet2D(tri_M,colors)
 
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         print("TriangleSet : pontos = {0}".format(point)) # imprime no terminal pontos
@@ -97,14 +171,12 @@ class GL:
         GL.camera_M_R = q.rotation_matrix().v
         
         # O inverso de uma translação é uma translação com sinais trocados em x,y e z
-        GL.camera_M_T = np.array([[0,0,0,-position[0]],
-                                   [0,0,0,-position[1]],
-                                   [0,0,0,-position[2]],
+        GL.camera_M_T = np.array([[1,0,0,-position[0]],
+                                   [0,1,0,-position[1]],
+                                   [0,0,1,-position[2]],
                                    [0,0,0,      1   ]])
                                    
         GL.Look_At = np.matmul(GL.camera_M_R,GL.camera_M_T)
-        
-        #print(GL.Look_At)
         
         
         # FOVy e matriz de perspectiva
@@ -123,11 +195,11 @@ class GL:
                                    [0,GL.near/GL.top,0,0],
                                    [0,0,-(GL.far+GL.near)/(GL.far-GL.near),-2*GL.far*GL.near/(GL.far-GL.near)],
                                    [0,0,-1,0]])
-        #print(GL.camera_M_P)
-        print("Viewpoint : ", end='')
-        print("position = {0} ".format(position), end='')
-        print("orientation = {0} ".format(orientation), end='')
-        print("fieldOfView = {0} ".format(fieldOfView))
+        
+        GL.tela_M = np.array([[GL.width/2,0,0,GL.width/2],
+                              [0,-GL.height/2,0,GL.height/2],
+                              [0,0,1,0],
+                              [0,0,0,1]])
 
     @staticmethod
     def transform_in(translation, scale, rotation):
@@ -146,21 +218,22 @@ class GL:
                         [0,0,0,1]])
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         if translation:
-            M_T = np.array([[0,0,0,translation[0]],
-                                [0,0,0,translation[1]],
-                                [0,0,0,translation[2]],
+            M_T = np.array([[1,0,0,translation[0]],
+                                [0,1,0,translation[1]],
+                                [0,0,1,translation[2]],
                                 [0,0,0,      1      ]])
             M_I = np.matmul(M_T,M_I)
         if scale:
             M_S = np.array([[scale[0],0,0,0],
                                 [0,scale[1],0,0],
                                 [0,0,scale[2],0],
-                                [0,0,   0,    0]])
+                                [0,0,   0,    1]])
             M_I = np.matmul(M_S,M_I)
         if rotation:
             q = Quaternio(angle = rotation[-1], axis = rotation[:3])
             M_R = q.rotation_matrix().v
             M_I = np.matmul(M_R,M_I)
+            
         GL.stack.append(M_I)
     @staticmethod
     def transform_out():
