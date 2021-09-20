@@ -261,6 +261,36 @@ class GL:
         # depois 2, 3 e 4, e assim por diante. Cuidado com a orientação dos vértices, ou seja,
         # todos no sentido horário ou todos no sentido anti-horário, conforme especificado.
 
+        for i in range(6,len(point)-2,3):
+            tri = []
+            tri.append([point[i],point[i-3],point[i-6]])
+            tri.append([point[i+1],point[i-2],point[i-5]])
+            tri.append([point[i+2],point[i-1],point[i-4]])
+            tri.append([1,1,1])
+            tri_M = np.array(tri)
+
+            for j in GL.stack:
+                
+                tri_M = np.matmul(j,tri_M)
+            
+            # Transformações Mundo-camera
+            tri_M = np.matmul(GL.Look_At,tri_M)
+            
+            # Transformações perspectiva
+            tri_M = np.matmul(GL.camera_M_P,tri_M)
+            
+            # Transformações NDC
+            tri_M = tri_M/tri_M[-1]
+            
+            # Transformaões mapping tela
+            tri_M = np.matmul(GL.tela_M,tri_M)
+            
+            # Lista de pontos x,y
+            tri_M = tri_M[:2,:].T.flatten().tolist()
+            
+            
+            GL.triangleSet2D(tri_M,colors)
+
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         print("TriangleStripSet : pontos = {0} ".format(point), end='')
         for i, strip in enumerate(stripCount):
@@ -285,7 +315,35 @@ class GL:
         # primeiro triângulo será com os vértices 0, 1 e 2, depois serão os vértices 1, 2 e 3,
         # depois 2, 3 e 4, e assim por diante. Cuidado com a orientação dos vértices, ou seja,
         # todos no sentido horário ou todos no sentido anti-horário, conforme especificado.
+        for i in range(6,len(point)-2,3):
+            tri = []
+            tri.append([point[i],point[i-3],point[i-6]])
+            tri.append([point[i+1],point[i-2],point[i-5]])
+            tri.append([point[i+2],point[i-1],point[i-4]])
+            tri.append([1,1,1])
+            tri_M = np.array(tri)
 
+            for j in GL.stack:
+                
+                tri_M = np.matmul(j,tri_M)
+            
+            # Transformações Mundo-camera
+            tri_M = np.matmul(GL.Look_At,tri_M)
+            
+            # Transformações perspectiva
+            tri_M = np.matmul(GL.camera_M_P,tri_M)
+            
+            # Transformações NDC
+            tri_M = tri_M/tri_M[-1]
+            
+            # Transformaões mapping tela
+            tri_M = np.matmul(GL.tela_M,tri_M)
+            
+            # Lista de pontos x,y
+            tri_M = tri_M[:2,:].T.flatten().tolist()
+            
+            
+            GL.triangleSet2D(tri_M,colors)
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         print("IndexedTriangleStripSet : pontos = {0}, index = {1}".format(point, index))
         print("IndexedTriangleStripSet : colors = {0}".format(colors)) # imprime as cores
