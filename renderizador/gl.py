@@ -40,7 +40,6 @@ class GL:
         r = round((colors['diffuseColor'][0])*255)
         g = round((colors['diffuseColor'][1])*255)
         b = round((colors['diffuseColor'][2])*255)
-        print(r,g,b)
         # Desenha uma linha entre cada par de pontos
         for i in range(0,len(vertices),6):
             x1 = vertices[i]
@@ -104,6 +103,20 @@ class GL:
         GL.near = near
         GL.far = far
         GL.stack = []
+        
+        GL.box_triangles = [1,2,3,
+                            2,3,4,
+                            2,4,6,
+                            4,6,8,
+                            3,4,7,
+                            4,7,8,
+                            1,2,6,
+                            1,5,6,
+                            6,7,8,
+                            5,6,7,
+                            3,5,7,
+                            1,3,5]
+                            
     @staticmethod
     def triangleSet(point, colors):
         """Função usada para renderizar TriangleSet."""
@@ -117,7 +130,7 @@ class GL:
         # triângulo, e assim por diante.
         # O parâmetro colors é um dicionário com os tipos cores possíveis, para o TriangleSet
         # você pode assumir o desenho das linhas com a cor emissiva (emissiveColor).
-        print("SETTTTTTTTTTTTTTTTTT")
+        aux = 1
         for i in range(0,len(point)-8,9):
             tri = []
             tri.append([point[i],point[i+3],point[i+6]])
@@ -148,13 +161,7 @@ class GL:
             
             
             GL.triangleSet2D(tri_M,colors)
-
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("TriangleSet : pontos = {0}".format(point)) # imprime no terminal pontos
-        print("TriangleSet : colors = {0}".format(colors)) # imprime no terminal as cores
-
-        # Exemplo de desenho de um pixel branco na coordenada 10, 10
-        gpu.GPU.draw_pixels([10, 10], gpu.GPU.RGB8, [255, 255, 255])  # altera pixel
+            aux+=1
 
     @staticmethod
     def viewpoint(position, orientation, fieldOfView):
@@ -164,7 +171,6 @@ class GL:
         # perspectiva para poder aplicar nos pontos dos objetos geométricos.
 
         # O print abaixo é só par"a vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("VIEWPOINT!!!!!!!!!")
         # Matriz para transformar a posição dos objetos do mundo para a posição em relação a câmera
         # O inverso de um rotação é a rotação para o lado contrário
         q = Quaternio(angle = -orientation[-1], axis = orientation[:3])
@@ -211,33 +217,37 @@ class GL:
         # do objeto ao redor do eixo x, y, z por t radianos, seguindo a regra da mão direita.
         # Quando se entrar em um nó transform se deverá salvar a matriz de transformação dos
         # modelos do mundo em alguma estrutura de pilha.
-        print("ENTREI NO TRANFORM IN")
         M_I = np.array([[1,0,0,0],
                         [0,1,0,0],
                         [0,0,1,0],
                         [0,0,0,1]])
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        if translation:
-            M_T = np.array([[1,0,0,translation[0]],
-                                [0,1,0,translation[1]],
-                                [0,0,1,translation[2]],
-                                [0,0,0,      1      ]])
-            M_I = np.matmul(M_T,M_I)
+        
+        
         if scale:
             M_S = np.array([[scale[0],0,0,0],
                                 [0,scale[1],0,0],
                                 [0,0,scale[2],0],
                                 [0,0,   0,    1]])
             M_I = np.matmul(M_S,M_I)
+            
         if rotation:
             q = Quaternio(angle = rotation[-1], axis = rotation[:3])
             M_R = q.rotation_matrix().v
             M_I = np.matmul(M_R,M_I)
             
+        if translation:
+            M_T = np.array([[1,0,0,translation[0]],
+                                [0,1,0,translation[1]],
+                                [0,0,1,translation[2]],
+                                [0,0,0,      1      ]])
+            
+            M_I = np.matmul(M_T,M_I)
+
         GL.stack.append(M_I)
+        
     @staticmethod
     def transform_out():
-        print("OUTTTTTTTTT!!!")
         """Função usada para renderizar (na verdade coletar os dados) de Transform."""
         # A função transform_out será chamada quando se sair em um nó X3D do tipo Transform do
         # grafo de cena. Não são passados valores, porém quando se sai de um nó transform se
@@ -291,15 +301,7 @@ class GL:
             
             GL.triangleSet2D(tri_M,colors)
 
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("TriangleStripSet : pontos = {0} ".format(point), end='')
-        for i, strip in enumerate(stripCount):
-            print("strip[{0}] = {1} ".format(i, strip), end='')
-        print("")
-        print("TriangleStripSet : colors = {0}".format(colors)) # imprime no terminal as cores
 
-        # Exemplo de desenho de um pixel branco na coordenada 10, 10
-        gpu.GPU.draw_pixels([10, 10], gpu.GPU.RGB8, [255, 255, 255])  # altera pixel
 
     @staticmethod
     def indexedTriangleStripSet(point, index, colors):
@@ -344,12 +346,7 @@ class GL:
             
             
             GL.triangleSet2D(tri_M,colors)
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("IndexedTriangleStripSet : pontos = {0}, index = {1}".format(point, index))
-        print("IndexedTriangleStripSet : colors = {0}".format(colors)) # imprime as cores
 
-        # Exemplo de desenho de um pixel branco na coordenada 10, 10
-        gpu.GPU.draw_pixels([10, 10], gpu.GPU.RGB8, [255, 255, 255])  # altera pixel
 
     @staticmethod
     def box(size, colors):
@@ -360,13 +357,17 @@ class GL:
         # e Z, respectivamente, e cada valor do tamanho deve ser maior que zero. Para desenha
         # essa caixa você vai provavelmente querer tesselar ela em triângulos, para isso
         # encontre os vértices e defina os triângulos.
-
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("Box : size = {0}".format(size)) # imprime no terminal pontos
-        print("Box : colors = {0}".format(colors)) # imprime no terminal as cores
-
-        # Exemplo de desenho de um pixel branco na coordenada 10, 10
-        gpu.GPU.draw_pixels([10, 10], gpu.GPU.RGB8, [255, 255, 255])  # altera pixel
+        pontos = []
+        triangles = []
+        for sx in range(-1,2,2):
+            for sy in range(-1,2,2):
+                for sz in range(-1,2,2):
+                    pontos.append([size[0]*sx/2,size[1]*sy/2,size[2]*sz/2])
+                    
+        for p in GL.box_triangles:
+            triangles+= pontos[p-1]
+        
+        GL.triangleSet(triangles, colors)
 
     @staticmethod
     def indexedFaceSet(coord, coordIndex, colorPerVertex, color, colorIndex,
