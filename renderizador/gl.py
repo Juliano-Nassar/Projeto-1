@@ -69,7 +69,8 @@ class GL:
             a,b,c = plane_eq(x1, y1, z1, x2, y2, z2, x3, y3, z3)
             
             pixelList = [vertices[i],vertices[i+1],vertices[i+2],vertices[i+3],vertices[i+4],vertices[i+5]]
-
+            
+            # TRANSFORMAR PIXEL SEARCH EM UMA FUNÇÃO
             # Encontra limites do triângulo, assim como pixel inicial
             starter = [int(x1),int(y1)]
             lowerX = int(x1)
@@ -147,6 +148,144 @@ class GL:
                     starterX += 1
 
                 starter[1] = starter[1]-1
+            # TRANSFORMAR PIXEL SEARCH EM UMA FUNÇÃO FIM
+            
+    def triangleSet2D_texture(vertices, texture, texture_coordinates , z_list = [0, 0, 0]):
+        """Função usada para renderizar TriangleSet2D."""
+        # Nessa função você receberá os vertices de um triângulo no parâmetro vertices,
+        # esses pontos são uma lista de pontos x, y sempre na ordem. Assim point[0] é o
+        # valor da coordenada x do primeiro ponto, point[1] o valor y do primeiro ponto.
+        # Já point[2] é a coordenada x do segundo ponto e assim por diante. Assuma que a
+        # quantidade de pontos é sempre multiplo de 3, ou seja, 6 valores ou 12 valores, etc.
+        # O parâmetro colors é um dicionário com os tipos cores possíveis, para o TriangleSet2D
+        # você pode assumir o desenho das linhas com a cor emissiva (emissiveColor).
+        
+        # Desenha uma linha entre cada par de pontos
+        
+        tex_res,_,_ = texture.shape
+        tex_res = tex_res-1
+        
+        for i in range(0,len(vertices),6):
+            x1 = vertices[i]
+            y1 = vertices[i+1]
+            z1 = z_list[i]
+            
+            x2 = vertices[i+2]
+            y2 = vertices[i+3]
+            z2 = z_list[i+1]
+            
+            x3 = vertices[i+4]
+            y3 = vertices[i+5]
+            z3 = z_list[i+2]
+            
+            a,b,c = plane_eq(x1, y1, z1, x2, y2, z2, x3, y3, z3)
+            
+            # text coords
+            u0 = texture_coordinates[i]
+            v0 = texture_coordinates[i+1]
+            
+            u1 = texture_coordinates[i+2]
+            v1 = texture_coordinates[i+3]     
+            
+            u2 = texture_coordinates[i+4]
+            v2 = texture_coordinates[i+5]
+            
+            pixelList = [vertices[i],vertices[i+1],vertices[i+2],vertices[i+3],vertices[i+4],vertices[i+5]]
+            
+            # TRANSFORMAR PIXEL SEARCH EM UMA FUNÇÃO
+            # Encontra limites do triângulo, assim como pixel inicial
+            starter = [int(x1),int(y1)]
+            lowerX = int(x1)
+            higherX = int(x1)
+            lowerY = int(y1)
+            for j in range(2,5,2) :
+                x = int(pixelList[j])
+                y = int(pixelList[j+1])
+                if x > higherX:
+                    higherX = int(x)
+                if x < lowerX:
+                    lowerX = int(x)
+                if y > starter[1]:
+                    starter = [int(x),int(y)]
+                if y < lowerY:
+                    lowerY = int(y)
+
+            #encontra o primeiro pixel a ser pintado
+            notDone = True
+            while notDone:
+                if starter[1] < lowerY:
+                    notDone = True
+                    break
+                    
+                color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starter[0], starter[1])
+                if color_lv > 0:
+                    #gpu.GPU.draw_pixels([starter[0], starter[1]], gpu.GPU.RGB8, [int(r*color_lv), int(g*color_lv), int(b*color_lv)])
+                    
+                    # Baricentro
+                    alpha,beta,gama,_ = Baricentro(x1, y1, z1, x2, y2, z2, x3, y3, z3, starter[0], starter[1])
+                    
+                    U = (u0*alpha + u1*beta + u2*gama)*tex_res
+                    V = (v0*alpha + v1*beta + v2*gama)*tex_res
+                    
+                    U = round(U)
+                    V = round(V)
+                    
+                    color = texture[U,V][:3]
+                    
+                    
+                    z = calc_z(starter[0],starter[1],a,b,c)
+                    
+                    point = [starter[0], starter[1], z]
+                    
+                    GL.draw_pixel(point,color)
+                    
+                starterX = starter[0] -1
+                while starterX >= lowerX:        
+                    color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1])            
+                    if color_lv > 0:
+                        #gpu.GPU.draw_pixels([starterX, starter[1]], gpu.GPU.RGB8, [int(r*color_lv), int(g*color_lv), int(b*color_lv)])
+                        # Baricentro
+                        alpha,beta,gama,Z = Baricentro(x1, y1, z1, x2, y2, z2, x3, y3, z3, starterX, starter[1])
+                        
+                        U = (u0*alpha + u1*beta + u2*gama)*tex_res
+                        V = (v0*alpha + v1*beta + v2*gama)*tex_res
+                        
+                        U = round(U)
+                        V = round(V)
+                        
+                        color = texture[U,V][:3] 
+                        
+                        z = calc_z(starterX,starter[1],a,b,c)
+                        point = [starterX, starter[1], z ]
+                        GL.draw_pixel(point,color)
+                    starterX -= 1
+
+
+                while starterX <= higherX:
+                    color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1])            
+                    if color_lv > 0:
+                        #gpu.GPU.draw_pixels([starterX, starter[1]], gpu.GPU.RGB8, [int(r*color_lv), int(g*color_lv), int(b*color_lv)])
+                        # Baricentro
+                        alpha,beta,gama,Z = Baricentro(x1, y1, z1, x2, y2, z2, x3, y3, z3, starterX, starter[1])
+                        
+                        U = (u0*alpha + u1*beta + u2*gama)*tex_res
+                        V = (v0*alpha + v1*beta + v2*gama)*tex_res
+                        
+                        U = round(U)
+                        V = round(V)
+                        
+                        color = texture[U,V][:3] 
+
+                        z = calc_z(starterX,starter[1],a,b,c)
+                        point = [starterX, starter[1], z]
+                        
+                        GL.draw_pixel(point,color)
+                        
+                    
+                    starterX += 1
+
+                starter[1] = starter[1]-1
+            # TRANSFORMAR PIXEL SEARCH EM UMA FUNÇÃO FIM            
             
     @staticmethod
     def setup(width, height, near=0.01, far=1000):
@@ -178,7 +317,7 @@ class GL:
                             1,3,5]
                             
     @staticmethod
-    def triangleSet(point, colors):
+    def triangleSet(point, colors, is_texture = False, texture_coordinates=[]):
         """Função usada para renderizar TriangleSet."""
         # Nessa função você receberá pontos no parâmetro point, esses pontos são uma lista
         # de pontos x, y, e z sempre na ordem. Assim point[0] é o valor da coordenada x do
@@ -192,7 +331,9 @@ class GL:
         # você pode assumir o desenho das linhas com a cor emissiva (emissiveColor).
         
         condition = 'multi_color'
-        if 'diffuseColor' in colors:
+        if is_texture:
+            condition = 'is_texture'
+        elif 'diffuseColor' in colors:
             condition = 'single_color'
 
         aux = 1
@@ -223,8 +364,14 @@ class GL:
             # Lista de pontos x,y
             tri_M = tri_M[:2,:].T.flatten().tolist()
             
-            if condition == 'multi_color':
+            if condition == 'is_texture':
+                text_index = int(i*6/9)
+                tex_coordinates = texture_coordinates[text_index:text_index+6]
+                GL.triangleSet2D_texture(tri_M,colors,z_list = z_list, texture_coordinates = tex_coordinates)
+                
+            elif condition == 'multi_color':
                 GL.triangleSet2D(tri_M,colors[i:i+9],z_list = z_list)
+                
             else:
                 GL.triangleSet2D(tri_M,colors,z_list = z_list)
                 
@@ -274,7 +421,6 @@ class GL:
                               [0,0,1,0],
                               [0,0,0,1]])
         
-        print(GL.Look_At)
         
     @staticmethod
     def transform_in(translation, scale, rotation):
@@ -457,8 +603,30 @@ class GL:
         # implementadado um método para a leitura de imagens.
         triangle = []
         triangle_colors = []
-        
-        if colorPerVertex and color:
+        tex_coords = []
+        if current_texture:
+            textura = current_texture[0]
+            textura_img = gpu.GPU.load_texture(textura)
+
+            
+            for index in coordIndex:
+                if index == -1:
+                    pass
+                else:
+                    triangle+= coord[index*3:index*3+3]
+                    
+            for index in texCoordIndex:
+                if index == -1:
+                    pass
+                else:
+                    tex_coords += texCoord[index*2:index*2+2]  
+                    
+                    
+            GL.triangleSet(triangle,textura_img, is_texture = True, texture_coordinates = tex_coords)
+            
+            
+
+        elif colorPerVertex and color:
         
             for index in coordIndex:
                 if index == -1:
