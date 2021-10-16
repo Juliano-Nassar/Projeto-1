@@ -63,6 +63,15 @@ class Renderizador:
             self.width,
             self.height
         )
+        
+        # Aloca memória no FrameBuffer para um tipo e tamanho especificado de buffer
+        gpu.GPU.framebuffer_storage(
+            self.framebuffers["FRONT"],
+            gpu.GPU.DEPTH_ATTACHMENT,
+            gpu.GPU.DEPTH_COMPONENT32F,
+            self.width,
+            self.height
+        )
         # Opções:
         # - COLOR_ATTACHMENT: alocações para as cores da imagem renderizada
         # - DEPTH_ATTACHMENT: alocações para as profundidades da imagem renderizada
@@ -79,7 +88,7 @@ class Renderizador:
 
         # Define a profundidade que ira apagar o FrameBuffer quando clear_buffer() invocado
         # Assuma 1.0 o mais afastado e -1.0 o mais próximo da camera
-        gpu.GPU.clear_depth(1.0)
+        gpu.GPU.clear_depth(float('inf'))
 
         # Definindo tamanho do Viewport para renderização
         self.scene.viewport(width=self.width, height=self.height)
@@ -90,7 +99,6 @@ class Renderizador:
 
         # Limpa o frame buffers atual
         gpu.GPU.clear_buffer()
-
         # Recursos que podem ser úteis:
         # Define o valor do pixel no framebuffer: draw_pixels(coord, mode, data)
         # Retorna o valor do pixel no framebuffer: read_pixels(coord, mode)
@@ -98,6 +106,7 @@ class Renderizador:
     def pos(self):
         """Rotinas pós renderização."""
         # Função invocada após o processo de renderização terminar.
+        
 
         # Método para a troca dos buffers (NÃO IMPLEMENTADO)
         gpu.GPU.swap_buffers()

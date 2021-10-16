@@ -150,28 +150,35 @@ def triangleSet2D(vertices, colors):
                 lowerY = int(y)
 
         #encontra o primeiro pixel a ser pintado
-        notDone = True
-        while notDone:
+        notFound = True
+        quebrou = False
+        while notFound:
             if starter[1] < lowerY:
-                notDone = True
+                quebrou = True
                 break
                 
-            color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starter[0], starter[1])
-            if color_lv > 0:
-                gpu.GPU.set_pixel(starter[0], starter[1], int(r*color_lv), int(g*color_lv), int(b*color_lv))
+            if TaDentro(x1, y1, x2, y2, x3, y3, starter[0], starter[1]):
+                notFound = False
+                gpu.GPU.set_pixel(starter[0], starter[1], r, g, b)
+                break
 
             starterX = starter[0] -1
-            while starterX >= lowerX:        
-                color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1])            
-                if color_lv > 0:
-                    gpu.GPU.set_pixel(starterX, starter[1], int(r*color_lv), int(g*color_lv), int(b*color_lv))
+            while starterX >= lowerX:
+                if TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1]):
+                    notFound = False
+                    gpu.GPU.set_pixel(starterX, starter[1], r, g, b)
+                    break
                 starterX -= 1
 
+            if notFound == False:
+                break
+            starterX = starter[0] +1
 
             while starterX <= higherX:
-                color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1])            
-                if color_lv > 0:
-                    gpu.GPU.set_pixel(starterX, starter[1], int(r*color_lv), int(g*color_lv), int(b*color_lv))
+                if TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1]):
+                    notFound = False
+                    gpu.GPU.set_pixel(starterX, starter[1], r, g, b)
+                    break
                 starterX += 1
 
             starter[1] = starter[1]-1
