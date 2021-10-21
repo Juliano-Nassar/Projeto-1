@@ -90,64 +90,49 @@ class GL:
 
             #encontra o primeiro pixel a ser pintado
             notDone = True
+            state = "first"
             while notDone:
-                if starter[1] < lowerY:
-                    notDone = True
-                    break
-                    
-                color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starter[0], starter[1])
-                if color_lv > 0:
-                    #gpu.GPU.draw_pixels([starter[0], starter[1]], gpu.GPU.RGB8, [int(r*color_lv), int(g*color_lv), int(b*color_lv)])
-                    
+                # Starter[0] = x do pixel novo
+                # Starter[1] = y do pixel novo
+                # Maquina de estados
+                if state == "first":
+                    pixelX = starter[0]
+                    pixelY = starter[1]
+                    state = "left"
+
+                elif state == "neutral":
+                    pixelX = starter[0]
+                    pixelY = pixelY - 1
+                    state = "left"
+                    if pixelY < lowerY:
+                        break
+
+                elif state == "left":
+                    pixelX = pixelX - 1
+                    if lowerX > pixelX:
+                        pixelX = starter[0]
+                        state = "right"
+                        continue
+                
+                elif state == "right":
+                    pixelX = pixelX + 1
+                    if higherX < pixelX:
+                        state = "neutral"
+                        continue
+
+                # Loop principal
+                if TaDentro(x1, y1, x2, y2, x3, y3, pixelX, pixelY):
+
                     # Baricentro
-                    alpha,beta,gama,Z = Baricentro(x1, y1, z1, x2, y2, z2, x3, y3, z3, starter[0], starter[1])
-                    
-                    # Interpolar cor com perspectiva
-                    if condition == 'multi_color':
+                    alpha,beta,gama,Z = Baricentro(x1, y1, z1, x2, y2, z2, x3, y3, z3, pixelX, pixelY)
+
+                    # Interpolar com cor perspectiva
+                    if condition == "multi_color":
                         color = QueCorDeus(alpha,c1,z1,beta,c2,z2,gama,c3,z3,Z)
-                    z = calc_z(starter[0],starter[1],a,b,c)
-                    
-                    point = [starter[0], starter[1], z]
+
+                    z = calc_z(pixelX,pixelY,a,b,c)
+                    point = [pixelX, pixelY, z]
                     GL.draw_pixel(point,color)
-                    
-                starterX = starter[0] -1
-                while starterX >= lowerX:        
-                    color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1])            
-                    if color_lv > 0:
-                        #gpu.GPU.draw_pixels([starterX, starter[1]], gpu.GPU.RGB8, [int(r*color_lv), int(g*color_lv), int(b*color_lv)])
-                        # Baricentro
-                        alpha,beta,gama,Z = Baricentro(x1, y1, z1, x2, y2, z2, x3, y3, z3, starterX, starter[1])
-                        
-                        # Interpolar cor com perspectiva
-                        if condition == 'multi_color':
-                            color = QueCorDeus(alpha,c1,z1,beta,c2,z2,gama,c3,z3,Z)
-                            
-                        z = calc_z(starterX,starter[1],a,b,c)
-                        point = [starterX, starter[1], z ]
-                        GL.draw_pixel(point,color)
-                    starterX -= 1
-
-
-                while starterX <= higherX:
-                    color_lv = TaDentro(x1, y1, x2, y2, x3, y3, starterX, starter[1])            
-                    if color_lv > 0:
-                        #gpu.GPU.draw_pixels([starterX, starter[1]], gpu.GPU.RGB8, [int(r*color_lv), int(g*color_lv), int(b*color_lv)])
-                        # Baricentro
-                        alpha,beta,gama,Z = Baricentro(x1, y1, z1, x2, y2, z2, x3, y3, z3, starterX, starter[1])
-                        
-                        # Interpolar cor com perspectiva
-                        if condition == 'multi_color':
-                            color = QueCorDeus(alpha,c1,z1,beta,c2,z2,gama,c3,z3,Z)
-                        
-                        z = calc_z(starterX,starter[1],a,b,c)
-                        point = [starterX, starter[1], z]
-                        
-                        GL.draw_pixel(point,color)
-                        
-                    
-                    starterX += 1
-
-                starter[1] = starter[1]-1
             # TRANSFORMAR PIXEL SEARCH EM UMA FUNÇÃO FIM
             
     def triangleSet2D_texture(vertices, texture, texture_coordinates , z_list = [0, 0, 0]):
