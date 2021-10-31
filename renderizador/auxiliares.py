@@ -1,3 +1,5 @@
+import numpy as np
+
 #calcula area do triangulo
 def Area(x1, y1, x2, y2, x3, y3) :
 
@@ -61,3 +63,52 @@ def plane_eq(x1, y1, z1, x2, y2, z2, x3, y3, z3):
 
 def calc_z(x,y,a,b,c):
     return a*x + y*b +c
+
+
+
+# Link aula de luzes:
+# http://jogos-digitais.s3-website-us-east-1.amazonaws.com/courses/computacao-grafica/aula12-calculo_de_iluminacao.html
+
+def difuse_light(Kd, I, r, n,l):
+    Ld = Kd*(I/(r**2)*max([0,n.dot(l)]))
+    return Ld
+
+def specular_light(Ks, I, r, n, l, v, p):
+    # Normaliza h
+    h = v+l
+    h = (h)/np.linalg.norm(h)
+
+    Ls = Ks*(I/r**2)*(max([0,n.dot(h)]))**p
+
+    return Ls
+
+def ambient_light(Ka, Ia):
+    La = Ka*Ia
+    return La
+
+def calc_light(Kd, Ks, Ka, I, r, n, l, v, p, Ia):
+    # Cálcula luzes separadamentes
+    Ld = difuse_light(Kd, I, r, n,l)
+    Ls = specular_light(Ks, I, r, n, l, v, p)
+    La = ambient_light(Ka, Ia)
+
+    L = La + Ls + Ld
+
+    return L
+
+# Interpolação
+def Hermit_Catmull_Rom(p0,p1,p2,p3):
+
+    HCR_matrix = np.matrix([[ -1/2 , 3/2, -3/2 ,  1/2 ],
+                            [   1 , -5/2,   2 ,  -1/2 ],
+                            [ -0.5,   0 ,  0.5,     0 ],
+                            [   0 ,   1 ,   0 ,     0 ])
+    
+    p = np.matrix([p0,
+                   p1,
+                   p2,
+                   p3])
+    
+    result = np.matmul(HCR_matrix, p)
+
+    return result
