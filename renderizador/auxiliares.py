@@ -102,7 +102,7 @@ def Hermit_Catmull_Rom(p0,p1,p2,p3):
     HCR_matrix = np.matrix([[ -1/2 , 3/2, -3/2 ,  1/2 ],
                             [   1 , -5/2,   2 ,  -1/2 ],
                             [ -0.5,   0 ,  0.5,     0 ],
-                            [   0 ,   1 ,   0 ,     0 ])
+                            [   0 ,   1 ,   0 ,     0 ]])
     
     p = np.matrix([p0,
                    p1,

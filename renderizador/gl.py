@@ -13,6 +13,8 @@ import gpu          # Simula os recursos de uma GPU
 import numpy as np
 from methods import Quaternio, Vector
 from auxiliares import *
+import time
+import math
 
 class GL:
     """Classe que representa a biblioteca gráfica (Graphics Library)."""
@@ -30,7 +32,7 @@ class GL:
             gpu.GPU.draw_pixels([point[0], point[1]], gpu.GPU.DEPTH_COMPONENT16, point[2])
             
 
-    def triangleSet2D(vertices, colors, z_list = [0, 0, 0]):
+    def triangleSet2D(vertices, colors, z_list = [1, 1, 1]):
         """Função usada para renderizar TriangleSet2D."""
         # Nessa função você receberá os vertices de um triângulo no parâmetro vertices,
         # esses pontos são uma lista de pontos x, y sempre na ordem. Assim point[0] é o
@@ -639,6 +641,61 @@ class GL:
         # raio da esfera que está sendo criada. Para desenha essa esfera você vai
         # precisar tesselar ela em triângulos, para isso encontre os vértices e defina
         # os triângulos.
+        res = 10
+        gira_gira = [radius,0,0]
+        lista_andares = []
+        #formando listas com os pontos em cada Z
+        for z in np.arange(-radius,radius,radius/res):
+            if z == -radius:
+                continue
+            raio_circulo = math.sqrt(radius**2 - z**2)
+            lista_andar = []
+            for x in np.arange(-raio_circulo,raio_circulo,raio_circulo/res):
+                y = math.sqrt(raio_circulo**2 - x**2)
+                ponto = [x,y,z]
+                lista_andar.append(ponto)
+                
+            for i in range(len(lista_andar)):
+                ponto = lista_andar[i]
+                ponto_invertido = [-ponto[0],-ponto[1],ponto[2]]
+                lista_andar.append(ponto_invertido)
+            lista_andares.append(lista_andar)
+
+        #montando os triangulos
+        for i in range(len(lista_andares)-1):
+            lista_desenha = []
+            for j in range(len(lista_andares[0])):
+                lista_desenha += lista_andares[i][j]
+                lista_desenha += lista_andares[i+1][j]
+            lista_desenha += lista_andares[i][0]
+            lista_desenha += lista_andares[i+1][0]
+            lista_tamanho = list(range(len(lista_andares[0])+1)) + [-1]
+            GL.indexedTriangleStripSet(lista_desenha, lista_tamanho, colors)
+        #primeiro andar
+        for j in range(len(lista_andares[0])-1):
+            lista_desenha = []
+            lista_desenha += [0,0,-radius]
+            lista_desenha += lista_andares[0][j]
+            lista_desenha += lista_andares[0][j+1]
+            GL.triangleSet(lista_desenha,colors)
+        lista_desenha = []
+        lista_desenha += [0,0,-radius]
+        lista_desenha += lista_andares[0][-1]
+        lista_desenha += lista_andares[0][0]
+        GL.triangleSet(lista_desenha,colors)
+        #ultimo andar
+        for j in range(len(lista_andares[0])-1):
+            lista_desenha = []
+            lista_desenha += [0,0,radius]
+            lista_desenha += lista_andares[-1][j]
+            lista_desenha += lista_andares[-1][j+1]
+            GL.triangleSet(lista_desenha,colors)
+        lista_desenha = []
+        lista_desenha += [0,0,radius]
+        lista_desenha += lista_andares[-1][-1]
+        lista_desenha += lista_andares[-1][0]
+        GL.triangleSet(lista_desenha,colors)
+
 
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         print("Sphere : radius = {0}".format(radius)) # imprime no terminal o raio da esfera
