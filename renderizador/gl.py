@@ -41,13 +41,26 @@ class GL:
         # quantidade de pontos é sempre multiplo de 3, ou seja, 6 valores ou 12 valores, etc.
         # O parâmetro colors é um dicionário com os tipos cores possíveis, para o TriangleSet2D
         # você pode assumir o desenho das linhas com a cor emissiva (emissiveColor).
-        
+
+
         if 'diffuseColor' in colors:
             r = round((colors['diffuseColor'][0])*255)
             g = round((colors['diffuseColor'][1])*255)
             b = round((colors['diffuseColor'][2])*255)
-            
+
             color = [r,g,b]
+            Oa = 0#colors['ambientIntensity']
+            Odrgb = np.array(colors['diffuseColor'])
+            Osrgb = np.array(colors['specularColor'])
+            Oergb = np.array(colors['emissiveColor'])
+            shininess = colors['shininess']
+            if GL.is_directional_light:
+                Ilrgb = GL.directional_light['Ilrgb']
+                Ii = GL.directional_light['Ii']
+                Iia = GL.directional_light['Iia']
+                l = GL.directional_light['L']
+                r = 1
+            
             condition = 'single_color'
         else:
             c1 = colors[:3]
@@ -68,6 +81,12 @@ class GL:
             y3 = vertices[i+5]
             z3 = z_list[i+2]
             
+            p0 = np.array([x3,y3,z3])
+            p1 = np.array([x2,y2,z2])
+            p2 = np.array([x1,y1,z1])
+            
+
+            n = calc_normal(p0,p1,p2)
             a,b,c = plane_eq(x1, y1, z1, x2, y2, z2, x3, y3, z3)
             
             pixelList = [vertices[i],vertices[i+1],vertices[i+2],vertices[i+3],vertices[i+4],vertices[i+5]]
@@ -128,12 +147,24 @@ class GL:
                     # Baricentro
                     alpha,beta,gama,Z = Baricentro(x1, y1, z1, x2, y2, z2, x3, y3, z3, pixelX, pixelY)
 
+                    
                     # Interpolar com cor perspectiva
                     if condition == "multi_color":
                         color = QueCorDeus(alpha,c1,z1,beta,c2,z2,gama,c3,z3,Z)
+                    
+                    
 
                     z = calc_z(pixelX,pixelY,a,b,c)
                     point = [pixelX, pixelY, z]
+
+                    if GL.is_directional_light or GL.is_point_light:
+                        v = -np.array(point)
+                        v = v/np.linalg.norm(v)
+
+
+                        color = calc_light(Oa, Odrgb, Osrgb, Oergb, Ilrgb, Ii, Iia, r, n, l, v, shininess)
+                        color = color*255
+                        color = color.astype(np.uint8)
                     GL.draw_pixel(point,color)
             # TRANSFORMAR PIXEL SEARCH EM UMA FUNÇÃO FIM
             
@@ -283,6 +314,8 @@ class GL:
         GL.near = near
         GL.far = far
         
+        GL.is_directional_light = False
+        GL.is_point_light = False
         
         M_I = np.array([[1,0,0,0],
                         [0,1,0,0],
@@ -503,7 +536,7 @@ class GL:
 
 
     @staticmethod
-    def indexedTriangleStripSet(point, index, colors):
+    def indexedTriangleStripSet(point, index, colors, inverse = False):
         """Função usada para renderizar IndexedTriangleStripSet."""
         # A função indexedTriangleStripSet é usada para desenhar tiras de triângulos
         # interconectados, você receberá as coordenadas dos pontos no parâmetro point, esses
@@ -516,19 +549,29 @@ class GL:
         # primeiro triângulo será com os vértices 0, 1 e 2, depois serão os vértices 1, 2 e 3,
         # depois 2, 3 e 4, e assim por diante. Cuidado com a orientação dos vértices, ou seja,
         # todos no sentido horário ou todos no sentido anti-horário, conforme especificado.
-        for i in range(6,len(point)-2,3):
+        invert = False
+        
+        for i in range(6, len(point)-2, 3):
             tri = []
-            tri.append([point[i],point[i-3],point[i-6]])
-            tri.append([point[i+1],point[i-2],point[i-5]])
-            tri.append([point[i+2],point[i-1],point[i-4]])
+            if not invert:
+                tri.append([point[i],   point[i-3], point[i-6]])
+                tri.append([point[i+1], point[i-2], point[i-5]])
+                tri.append([point[i+2], point[i-1], point[i-4]])
+            else: # If invert, invert p1 and p2
+                tri.append([point[i-3],  point[i],    point[i-6]])
+                tri.append([point[i-2],  point[i+1],  point[i-5]])
+                tri.append([point[i-1],  point[i+2],  point[i-4]])
+
             tri.append([1,1,1])
+
             tri_M = np.array(tri)
 
             tri_M = np.matmul(GL.stack[-1],tri_M)
             
             # Transformações Mundo-camera
             tri_M = np.matmul(GL.Look_At,tri_M)
-            
+            z_list = tri_M[-2]
+
             # Transformações perspectiva
             tri_M = np.matmul(GL.camera_M_P,tri_M)
             
@@ -541,9 +584,10 @@ class GL:
             # Lista de pontos x,y
             tri_M = tri_M[:2,:].T.flatten().tolist()
             
-            
-            GL.triangleSet2D(tri_M,colors)
+            GL.triangleSet2D(tri_M,colors,z_list = z_list)
 
+            if inverse:
+                invert = not invert
 
     @staticmethod
     def box(size, colors):
@@ -641,8 +685,7 @@ class GL:
         # raio da esfera que está sendo criada. Para desenha essa esfera você vai
         # precisar tesselar ela em triângulos, para isso encontre os vértices e defina
         # os triângulos.
-        res = 10
-        gira_gira = [radius,0,0]
+        res = 5
         lista_andares = []
         #formando listas com os pontos em cada Z
         for z in np.arange(-radius,radius,radius/res):
@@ -667,33 +710,41 @@ class GL:
             for j in range(len(lista_andares[0])):
                 lista_desenha += lista_andares[i][j]
                 lista_desenha += lista_andares[i+1][j]
+
             lista_desenha += lista_andares[i][0]
             lista_desenha += lista_andares[i+1][0]
+
+            
             lista_tamanho = list(range(len(lista_andares[0])+1)) + [-1]
-            GL.indexedTriangleStripSet(lista_desenha, lista_tamanho, colors)
+            GL.indexedTriangleStripSet(lista_desenha, lista_tamanho, colors,inverse=True)
         #primeiro andar
         for j in range(len(lista_andares[0])-1):
             lista_desenha = []
             lista_desenha += [0,0,-radius]
-            lista_desenha += lista_andares[0][j]
             lista_desenha += lista_andares[0][j+1]
+            lista_desenha += lista_andares[0][j]
+            
+            
             GL.triangleSet(lista_desenha,colors)
         lista_desenha = []
         lista_desenha += [0,0,-radius]
-        lista_desenha += lista_andares[0][-1]
         lista_desenha += lista_andares[0][0]
+        lista_desenha += lista_andares[0][-1]
+        
         GL.triangleSet(lista_desenha,colors)
         #ultimo andar
         for j in range(len(lista_andares[0])-1):
             lista_desenha = []
             lista_desenha += [0,0,radius]
-            lista_desenha += lista_andares[-1][j]
             lista_desenha += lista_andares[-1][j+1]
+            lista_desenha += lista_andares[-1][j]
+            
             GL.triangleSet(lista_desenha,colors)
         lista_desenha = []
         lista_desenha += [0,0,radius]
-        lista_desenha += lista_andares[-1][-1]
         lista_desenha += lista_andares[-1][0]
+        lista_desenha += lista_andares[-1][-1]
+        
         GL.triangleSet(lista_desenha,colors)
 
 
@@ -721,6 +772,18 @@ class GL:
         # cor, intensidade. O campo de direção especifica o vetor de direção da iluminação
         # que emana da fonte de luz no sistema de coordenadas local. A luz é emitida ao
         # longo de raios paralelos de uma distância infinita.
+        
+        for i in range(len(direction)):
+            direction[i] = direction[i]*-1
+
+        GL.directional_light = {
+            'Iia':ambientIntensity,
+            'Ilrgb':color,
+            'Ii':intensity,
+            'L':np.array(direction)
+        }
+
+        GL.is_directional_light = True
 
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         print("DirectionalLight : ambientIntensity = {0}".format(ambientIntensity))
@@ -736,6 +799,15 @@ class GL:
         # Possui os campos básicos ambientIntensity, cor, intensidade. Um nó PointLight ilumina
         # a geometria em um raio de sua localização. O campo do raio deve ser maior ou igual a
         # zero. A iluminação do nó PointLight diminui com a distância especificada.
+
+        GL.point_light = {
+            'Ia':ambientIntensity,
+            'Ilrgb':color,
+            'Ii':intensity,
+            'location':np.array(location)
+        }
+
+        GL.is_point_light = True
 
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         print("PointLight : ambientIntensity = {0}".format(ambientIntensity))

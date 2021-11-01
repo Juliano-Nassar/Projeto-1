@@ -69,30 +69,31 @@ def calc_z(x,y,a,b,c):
 # Link aula de luzes:
 # http://jogos-digitais.s3-website-us-east-1.amazonaws.com/courses/computacao-grafica/aula12-calculo_de_iluminacao.html
 
-def difuse_light(Kd, I, r, n,l):
-    Ld = Kd*(I/(r**2)*max([0,n.dot(l)]))
+def diffuse_light(Odrgb, Ii, r, n,l):
+    Ld = (Ii/(r**2)*Odrgb*max([0,n.dot(l)]))
     return Ld
 
-def specular_light(Ks, I, r, n, l, v, p):
+def specular_light(Osrgb, Ii, r, n, l, v, shininess):
     # Normaliza h
     h = v+l
     h = (h)/np.linalg.norm(h)
 
-    Ls = Ks*(I/r**2)*(max([0,n.dot(h)]))**p
+    Ls = (Ii/r**2)*Osrgb*(max([0,n.dot(h)]))**(shininess*128)
 
     return Ls
 
-def ambient_light(Ka, Ia):
-    La = Ka*Ia
+def ambient_light(Odrgb, Iia, Oa):
+    La = Iia*Odrgb*Oa
     return La
 
-def calc_light(Kd, Ks, Ka, I, r, n, l, v, p, Ia):
+def calc_light(Oa, Odrgb, Osrgb, Oergb, Ilrgb, Ii, Iia, r, n, l, v, shininess):
     # Cálcula luzes separadamentes
-    Ld = difuse_light(Kd, I, r, n,l)
-    Ls = specular_light(Ks, I, r, n, l, v, p)
-    La = ambient_light(Ka, Ia)
-
+    Ld = diffuse_light(Odrgb, Ii, r, n,l)
+    Ls = specular_light(Osrgb, Ii, r, n, l, v, shininess)
+    La = ambient_light(Odrgb, Iia, Oa)
+    
     L = La + Ls + Ld
+    L = Oergb + np.multiply(Ilrgb,L)
 
     return L
 
@@ -112,3 +113,11 @@ def Hermit_Catmull_Rom(p0,p1,p2,p3):
     result = np.matmul(HCR_matrix, p)
 
     return result
+
+
+def calc_normal(p0, p1, p2):
+    v0 = p1 - p0
+    v1 = p2 - p0
+    n = np.cross(v0,v1)
+    n = n/np.linalg.norm(n)
+    return n
