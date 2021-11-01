@@ -88,7 +88,7 @@ def ambient_light(Odrgb, Iia, Oa):
 
 def calc_light(Oa, Odrgb, Osrgb, Oergb, Ilrgb, Ii, Iia, r, n, l, v, shininess):
     # Cálcula luzes separadamentes
-    Ld = diffuse_light(Odrgb, Ii, r, n,l)
+    Ld = diffuse_light(Odrgb, Ii, r, n, l)
     Ls = specular_light(Osrgb, Ii, r, n, l, v, shininess)
     La = ambient_light(Odrgb, Iia, Oa)
     

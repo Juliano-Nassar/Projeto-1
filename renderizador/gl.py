@@ -54,6 +54,7 @@ class GL:
             Osrgb = np.array(colors['specularColor'])
             Oergb = np.array(colors['emissiveColor'])
             shininess = colors['shininess']
+
             if GL.is_directional_light:
                 Ilrgb = GL.directional_light['Ilrgb']
                 Ii = GL.directional_light['Ii']
@@ -161,12 +162,10 @@ class GL:
                         v = -np.array(point)
                         v = v/np.linalg.norm(v)
 
-
                         color = calc_light(Oa, Odrgb, Osrgb, Oergb, Ilrgb, Ii, Iia, r, n, l, v, shininess)
                         color = color*255
                         color = color.astype(np.uint8)
                     GL.draw_pixel(point,color)
-            # TRANSFORMAR PIXEL SEARCH EM UMA FUNÇÃO FIM
             
     def triangleSet2D_texture(vertices, texture, texture_coordinates , z_list = [0, 0, 0]):
         """Função usada para renderizar TriangleSet2D."""
