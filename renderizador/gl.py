@@ -463,13 +463,12 @@ class GL:
                                 [0,0,scale[2],0],
                                 [0,0,   0,    1]])
             M_I = np.matmul(M_S,M_I)
-            
+        print(rotation)
         if rotation:
             q = Quaternio(angle = rotation[-1], axis = rotation[:3])
             M_R = q.rotation_matrix().v
             M_I = np.matmul(M_R,M_I)
-
-        if len(translation) > 0:
+        if translation:
             M_T = np.array([[1,0,0,translation[0]],
                                 [0,1,0,translation[1]],
                                 [0,0,1,translation[2]],
@@ -760,6 +759,8 @@ class GL:
         # A luz headlight deve ser direcional, ter intensidade = 1, cor = (1 1 1),
         # ambientIntensity = 0,0 e direção = (0 0 −1).
 
+        if headlight:
+            GL.directionalLight(0.0, [1,1,1] , 1, [0, 0, -1])
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         print("NavigationInfo : headlight = {0}".format(headlight)) # imprime no terminal
 
@@ -864,7 +865,7 @@ class GL:
         # na primeira e na última chave não forem idênticos, o campo closed será ignorado.
         value = []
         for i in range(len(key)):
-            valor = [keyValue[3*i],keyValue[3*i+1],keyValue[3*i+2]]
+            valor = [keyValue[3*i], keyValue[3*i+1], keyValue[3*i+2]]
             value.append(valor)
 
         M_H = np.array([[2,-2,1,1],
@@ -872,9 +873,8 @@ class GL:
                         [0,0,1,0],
                         [1,0,0,0]])
 
-        set_fraction = 0.5
 
-        for i in range(len(key)-1):
+        for i in range(len(key)-2):
             if key[i+1] > set_fraction:
                 
                 S = (set_fraction - key[i])/(key[i+1] - key[i])
@@ -884,7 +884,10 @@ class GL:
 
                 Ti = [(value[i+1][0] - value[i-1][0])/2,(value[i+1][1] - value[i-1][1])/2,(value[i+1][2] - value[i-1][2])/2]
                 Ti1 = [(value[i+2][0] - value[i][0])/2,(value[i+2][1] - value[i][1])/2,(value[i+2][2] - value[i][2])/2]
-
+                
+                print("VALUE")
+                print(value[i+2][0])
+                print("VALUE END")
                 M_C = np.array([[value[i][0],value[i][1],value[i][2]],
                                 [value[i+1][0],value[i+1][1],value[i+1][2]],
                                 [Ti[0],Ti[1],Ti[2]],
@@ -907,7 +910,7 @@ class GL:
         value_changed = [1.0, 0.0, 0.0]
         print(value_changed)
         print(M_Vs)
-        return M_Vs[0]
+        return list(M_Vs[0])
 
     @staticmethod
     def orientationInterpolator(set_fraction, key, keyValue):
@@ -924,9 +927,9 @@ class GL:
         # quadros-chave no key.
         
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("OrientationInterpolator : set_fraction = {0}".format(set_fraction))
-        print("OrientationInterpolator : key = {0}".format(key)) # imprime no terminal
-        print("OrientationInterpolator : keyValue = {0}".format(keyValue))
+        #print("OrientationInterpolator : set_fraction = {0}".format(set_fraction))
+        #print("OrientationInterpolator : key = {0}".format(key)) # imprime no terminal
+        #print("OrientationInterpolator : keyValue = {0}".format(keyValue))
 
         # Abaixo está só um exemplo de como os dados podem ser calculados e transferidos
         value_changed = [0, 0, 1, 0]
