@@ -468,8 +468,8 @@ class GL:
             q = Quaternio(angle = rotation[-1], axis = rotation[:3])
             M_R = q.rotation_matrix().v
             M_I = np.matmul(M_R,M_I)
-            
-        if translation:
+
+        if len(translation) > 0:
             M_T = np.array([[1,0,0,translation[0]],
                                 [0,1,0,translation[1]],
                                 [0,0,1,translation[2]],
@@ -862,6 +862,40 @@ class GL:
         # quadros-chave no key. O campo closed especifica se o interpolador deve tratar a malha
         # como fechada, com uma transições da última chave para a primeira chave. Se os keyValues
         # na primeira e na última chave não forem idênticos, o campo closed será ignorado.
+        value = []
+        for i in range(len(key)):
+            valor = [keyValue[3*i],keyValue[3*i+1],keyValue[3*i+2]]
+            value.append(valor)
+
+        M_H = np.array([[2,-2,1,1],
+                        [-3,3,-2,-1],
+                        [0,0,1,0],
+                        [1,0,0,0]])
+
+        set_fraction = 0.5
+
+        for i in range(len(key)-1):
+            if key[i+1] > set_fraction:
+                
+                S = (set_fraction - key[i])/(key[i+1] - key[i])
+                M_S = np.array([S**3,S**2,S,1]),
+
+
+
+                Ti = [(value[i+1][0] - value[i-1][0])/2,(value[i+1][1] - value[i-1][1])/2,(value[i+1][2] - value[i-1][2])/2]
+                Ti1 = [(value[i+2][0] - value[i][0])/2,(value[i+2][1] - value[i][1])/2,(value[i+2][2] - value[i][2])/2]
+
+                M_C = np.array([[value[i][0],value[i][1],value[i][2]],
+                                [value[i+1][0],value[i+1][1],value[i+1][2]],
+                                [Ti[0],Ti[1],Ti[2]],
+                                [Ti1[0],Ti1[1],Ti1[2]]])
+                    
+                M_V = np.matmul(M_S,M_H)
+                M_Vs = np.matmul(M_V,M_C)
+
+                break
+
+
 
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         print("SplinePositionInterpolator : set_fraction = {0}".format(set_fraction))
@@ -870,9 +904,10 @@ class GL:
         print("SplinePositionInterpolator : closed = {0}".format(closed))
 
         # Abaixo está só um exemplo de como os dados podem ser calculados e transferidos
-        value_changed = [0.0, 0.0, 0.0]
-        
-        return value_changed
+        value_changed = [1.0, 0.0, 0.0]
+        print(value_changed)
+        print(M_Vs)
+        return M_Vs[0]
 
     @staticmethod
     def orientationInterpolator(set_fraction, key, keyValue):
@@ -887,7 +922,7 @@ class GL:
         # dos valores em keyValue, a fração a ser interpolada vem de set_fraction que varia de
         # zeroa a um. O campo keyValue deve conter exatamente tantas rotações 3D quanto os
         # quadros-chave no key.
-
+        
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         print("OrientationInterpolator : set_fraction = {0}".format(set_fraction))
         print("OrientationInterpolator : key = {0}".format(key)) # imprime no terminal
