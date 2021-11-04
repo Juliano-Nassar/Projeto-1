@@ -88,7 +88,7 @@ class Renderizador:
 
         # Define a profundidade que ira apagar o FrameBuffer quando clear_buffer() invocado
         # Assuma 1.0 o mais afastado e -1.0 o mais próximo da camera
-        gpu.GPU.clear_depth(float('inf'))
+        gpu.GPU.clear_depth(float('-inf'))
 
         # Definindo tamanho do Viewport para renderização
         self.scene.viewport(width=self.width, height=self.height)

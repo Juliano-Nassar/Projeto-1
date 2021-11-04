@@ -27,7 +27,8 @@ class GL:
 
     def draw_pixel(point, color):
         # Z-BUFFER
-        if point[2] <= gpu.GPU.read_pixels([point[0], point[1]],gpu.GPU.DEPTH_COMPONENT16):
+        depth = gpu.GPU.read_pixels([point[0], point[1]],gpu.GPU.DEPTH_COMPONENT16)
+        if point[2] >= depth:
             gpu.GPU.draw_pixels([point[0], point[1]], gpu.GPU.RGB8, [int(color[0]), int(color[1]), int(color[2])])
             gpu.GPU.draw_pixels([point[0], point[1]], gpu.GPU.DEPTH_COMPONENT16, point[2])
             
@@ -144,13 +145,11 @@ class GL:
 
                 # Loop principal
                 if TaDentro(x1, y1, x2, y2, x3, y3, pixelX, pixelY):
-
-                    # Baricentro
-                    alpha,beta,gama,Z = Baricentro(x1, y1, z1, x2, y2, z2, x3, y3, z3, pixelX, pixelY)
-
-                    
+                            
                     # Interpolar com cor perspectiva
                     if condition == "multi_color":
+                        # Baricentro
+                        alpha,beta,gama,Z = Baricentro(x1, y1, z1, x2, y2, z2, x3, y3, z3, pixelX, pixelY)
                         color = QueCorDeus(alpha,c1,z1,beta,c2,z2,gama,c3,z3,Z)
                     
                     
@@ -164,6 +163,24 @@ class GL:
 
                         color = calc_light(Oa, Odrgb, Osrgb, Oergb, Ilrgb, Ii, Iia, r, n, l, v, shininess)
                         color = color*255
+                        # if color[0] == 0.0 and color[1] == 0.0 and color[2] == 0.0:
+                        #     print(f"""
+                        #     Oa {Oa}, 
+                        #     Odrgb {Odrgb}, 
+                        #     Osrgb {Osrgb}, 
+                        #     Oergb {Oergb}, 
+                        #     Ilrgb {Ilrgb}, 
+                        #     Ii {Ii}, 
+                        #     Iia {Iia}, 
+                        #     r {r}, 
+                        #     n {n}, 
+                        #     l {l}, 
+                        #     v {v}, 
+                        #     shininess {shininess},
+                        #     z = {z}
+                        #     """)
+                        #     print(color)
+
                         color = color.astype(np.uint8)
                     GL.draw_pixel(point,color)
             
@@ -463,7 +480,6 @@ class GL:
                                 [0,0,scale[2],0],
                                 [0,0,   0,    1]])
             M_I = np.matmul(M_S,M_I)
-        print(rotation)
         if rotation:
             q = Quaternio(angle = rotation[-1], axis = rotation[:3])
             M_R = q.rotation_matrix().v
@@ -772,15 +788,12 @@ class GL:
         # cor, intensidade. O campo de direção especifica o vetor de direção da iluminação
         # que emana da fonte de luz no sistema de coordenadas local. A luz é emitida ao
         # longo de raios paralelos de uma distância infinita.
-        
-        for i in range(len(direction)):
-            direction[i] = direction[i]*-1
 
         GL.directional_light = {
             'Iia':ambientIntensity,
             'Ilrgb':color,
             'Ii':intensity,
-            'L':np.array(direction)
+            'L':np.array(direction)*-1
         }
 
         GL.is_directional_light = True
@@ -932,7 +945,7 @@ class GL:
         #print("OrientationInterpolator : keyValue = {0}".format(keyValue))
 
         # Abaixo está só um exemplo de como os dados podem ser calculados e transferidos
-        value_changed = [0, 0, 1, 0]
+        value_changed = [0, 0, 0, 1]
 
         return value_changed
 
