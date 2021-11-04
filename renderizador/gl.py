@@ -798,11 +798,6 @@ class GL:
 
         GL.is_directional_light = True
 
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("DirectionalLight : ambientIntensity = {0}".format(ambientIntensity))
-        print("DirectionalLight : color = {0}".format(color)) # imprime no terminal
-        print("DirectionalLight : intensity = {0}".format(intensity)) # imprime no terminal
-        print("DirectionalLight : direction = {0}".format(direction)) # imprime no terminal
 
     @staticmethod
     def pointLight(ambientIntensity, color, intensity, location):
@@ -966,9 +961,9 @@ class GL:
         # quadros-chave no key.
         
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        #print("OrientationInterpolator : set_fraction = {0}".format(set_fraction))
-        #print("OrientationInterpolator : key = {0}".format(key)) # imprime no terminal
-        #print("OrientationInterpolator : keyValue = {0}".format(keyValue))
+        print("OrientationInterpolator : set_fraction = {0}".format(set_fraction))
+        print("OrientationInterpolator : key = {0}".format(key)) # imprime no terminal
+        print("OrientationInterpolator : keyValue = {0}".format(keyValue))
 
         # Abaixo está só um exemplo de como os dados podem ser calculados e transferidos
         value_changed = [0, 0, 0, 1]
