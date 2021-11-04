@@ -964,16 +964,42 @@ class GL:
         # dos valores em keyValue, a fração a ser interpolada vem de set_fraction que varia de
         # zeroa a um. O campo keyValue deve conter exatamente tantas rotações 3D quanto os
         # quadros-chave no key.
-        
+        value = []
+        for i in range(len(key)):
+            valor = [keyValue[4*i], keyValue[4*i+1], keyValue[4*i+2], keyValue[4*i+3]]
+            value.append(valor)
+
+        for i in range(len(key)-1):
+                if key[i+1] > set_fraction:
+                    deltaX = (value[i][0]-value[i+1][0])/(key[i]-key[i+1])
+                    bX = value[i+1][0] - (deltaX * key[i+1])
+                    resultX = deltaX * set_fraction + bX
+                    
+                    deltaY = (value[i][1]-value[i+1][1])/(key[i]-key[i+1])
+                    bY = value[i+1][1] - (deltaY * key[i+1])
+                    resultY = deltaY * set_fraction + bY
+
+                    deltaZ = (value[i][2]-value[i+1][2])/(key[i]-key[i+1])
+                    bZ = value[i+1][2] - (deltaZ * key[i+1])
+                    resultZ = deltaZ * set_fraction + bZ
+
+                    deltaT = (value[i][3]-value[i+1][3])/(key[i]-key[i+1])
+                    bT = value[i+1][3] - (deltaT * key[i+1])
+                    resultT = deltaT * set_fraction + bT
+
+
+        #deltax / deltay = coeficiente angular
+
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
         #print("OrientationInterpolator : set_fraction = {0}".format(set_fraction))
         #print("OrientationInterpolator : key = {0}".format(key)) # imprime no terminal
         #print("OrientationInterpolator : keyValue = {0}".format(keyValue))
 
         # Abaixo está só um exemplo de como os dados podem ser calculados e transferidos
-        value_changed = [0, 0, 0, 1]
+        value_changed = [0, 0, 1, 0]
+        result = [resultX,resultY,resultZ,resultT]
+        return result
 
-        return value_changed
 
     # Para o futuro (Não para versão atual do projeto.)
     def vertex_shader(self, shader):
