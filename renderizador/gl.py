@@ -863,6 +863,11 @@ class GL:
         # quadros-chave no key. O campo closed especifica se o interpolador deve tratar a malha
         # como fechada, com uma transições da última chave para a primeira chave. Se os keyValues
         # na primeira e na última chave não forem idênticos, o campo closed será ignorado.
+
+
+        # ignora o closed se o primeiro e o ultimo keyvalue forem diferentes
+        if (not keyValue[0] == keyValue[-3]) or (not keyValue[1] == keyValue[-2]) or (not keyValue[2] == keyValue[-1]):
+            closed = False
         value = []
         for i in range(len(key)):
             valor = [keyValue[3*i], keyValue[3*i+1], keyValue[3*i+2]]
@@ -873,30 +878,53 @@ class GL:
                         [0,0,1,0],
                         [1,0,0,0]])
 
+        if not closed:
+            for i in range(len(key)-1):
+                if key[i+1] > set_fraction:
+                    if i == 0:
+                        Ti = [0,0,0]
+                    else:
+                        Ti = [(value[i+1][0] - value[i-1][0])/2,(value[i+1][1] - value[i-1][1])/2,(value[i+1][2] - value[i-1][2])/2]
+                    if i+2 >= len(key):
+                        Ti1 = [0,0,0]  
+                    else:
+                        Ti1 = [(value[i+2][0] - value[i][0])/2,(value[i+2][1] - value[i][1])/2,(value[i+2][2] - value[i][2])/2]            
+                    S = (set_fraction - key[i])/(key[i+1] - key[i])
+                    M_S = np.array([S**3,S**2,S,1])
 
-        for i in range(len(key)-2):
-            if key[i+1] > set_fraction:
-                
-                S = (set_fraction - key[i])/(key[i+1] - key[i])
-                M_S = np.array([S**3,S**2,S,1]),
+                    M_C = np.array([[value[i][0],value[i][1],value[i][2]],
+                                    [value[i+1][0],value[i+1][1],value[i+1][2]],
+                                    [Ti[0],Ti[1],Ti[2]],
+                                    [Ti1[0],Ti1[1],Ti1[2]]])
+                        
+                    M_V = np.matmul(M_S,M_H)
+                    M_Vs = np.matmul(M_V,M_C)
 
+                    break
+        else:
+            for i in range(len(key)-1):
+                if key[i+1] > set_fraction:
+                    if i == 0:
+                        Ti = [(value[i+1][0] - value[-1][0])/2,(value[i+1][1] - value[-1][1])/2,(value[i+1][2] - value[-1][2])/2]
+                    else:
+                        Ti = [(value[i+1][0] - value[i-1][0])/2,(value[i+1][1] - value[i-1][1])/2,(value[i+1][2] - value[i-1][2])/2]
+                    if i+2 >= len(key):
+                        Ti1 = [(value[0][0] - value[i][0])/2,(value[0][1] - value[i][1])/2,(value[0][2] - value[i][2])/2] 
+                    else:
+                        Ti1 = [(value[i+2][0] - value[i][0])/2,(value[i+2][1] - value[i][1])/2,(value[i+2][2] - value[i][2])/2]            
+                    S = (set_fraction - key[i])/(key[i+1] - key[i])
+                    M_S = np.array([S**3,S**2,S,1])
 
+                    M_C = np.array([[value[i][0],value[i][1],value[i][2]],
+                                    [value[i+1][0],value[i+1][1],value[i+1][2]],
+                                    [Ti[0],Ti[1],Ti[2]],
+                                    [Ti1[0],Ti1[1],Ti1[2]]])
+                        
+                    M_V = np.matmul(M_S,M_H)
+                    M_Vs = np.matmul(M_V,M_C)
 
-                Ti = [(value[i+1][0] - value[i-1][0])/2,(value[i+1][1] - value[i-1][1])/2,(value[i+1][2] - value[i-1][2])/2]
-                Ti1 = [(value[i+2][0] - value[i][0])/2,(value[i+2][1] - value[i][1])/2,(value[i+2][2] - value[i][2])/2]
-                
-                print("VALUE")
-                print(value[i+2][0])
-                print("VALUE END")
-                M_C = np.array([[value[i][0],value[i][1],value[i][2]],
-                                [value[i+1][0],value[i+1][1],value[i+1][2]],
-                                [Ti[0],Ti[1],Ti[2]],
-                                [Ti1[0],Ti1[1],Ti1[2]]])
-                    
-                M_V = np.matmul(M_S,M_H)
-                M_Vs = np.matmul(M_V,M_C)
+                    break
 
-                break
 
 
 
@@ -908,9 +936,7 @@ class GL:
 
         # Abaixo está só um exemplo de como os dados podem ser calculados e transferidos
         value_changed = [1.0, 0.0, 0.0]
-        print(value_changed)
-        print(M_Vs)
-        return list(M_Vs[0])
+        return list(M_Vs)
 
     @staticmethod
     def orientationInterpolator(set_fraction, key, keyValue):
