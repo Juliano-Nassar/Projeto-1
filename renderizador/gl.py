@@ -50,7 +50,8 @@ class GL:
             b = round((colors['diffuseColor'][2])*255)
 
             color = [r,g,b]
-            Oa = 0#colors['ambientIntensity']
+
+            Oa = 0 #colors['ambientIntensity']
             Odrgb = np.array(colors['diffuseColor'])
             Osrgb = np.array(colors['specularColor'])
             Oergb = np.array(colors['emissiveColor'])
@@ -163,23 +164,6 @@ class GL:
 
                         color = calc_light(Oa, Odrgb, Osrgb, Oergb, Ilrgb, Ii, Iia, r, n, l, v, shininess)
                         color = color*255
-                        # if color[0] == 0.0 and color[1] == 0.0 and color[2] == 0.0:
-                        #     print(f"""
-                        #     Oa {Oa}, 
-                        #     Odrgb {Odrgb}, 
-                        #     Osrgb {Osrgb}, 
-                        #     Oergb {Oergb}, 
-                        #     Ilrgb {Ilrgb}, 
-                        #     Ii {Ii}, 
-                        #     Iia {Iia}, 
-                        #     r {r}, 
-                        #     n {n}, 
-                        #     l {l}, 
-                        #     v {v}, 
-                        #     shininess {shininess},
-                        #     z = {z}
-                        #     """)
-                        #     print(color)
 
                         color = color.astype(np.uint8)
                     GL.draw_pixel(point,color)
@@ -502,8 +486,7 @@ class GL:
         # deverá recuperar a matriz de transformação dos modelos do mundo da estrutura de
         # pilha implementada.
         GL.stack.pop()
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        #print("Saindo de Transform")
+
 
     @staticmethod
     def triangleStripSet(point, stripCount, colors):
@@ -563,7 +546,7 @@ class GL:
         # primeiro triângulo será com os vértices 0, 1 e 2, depois serão os vértices 1, 2 e 3,
         # depois 2, 3 e 4, e assim por diante. Cuidado com a orientação dos vértices, ou seja,
         # todos no sentido horário ou todos no sentido anti-horário, conforme especificado.
-        invert = False
+        invert = True
         
         for i in range(6, len(point)-2, 3):
             tri = []
@@ -761,11 +744,6 @@ class GL:
         
         GL.triangleSet(lista_desenha,colors)
 
-
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("Sphere : radius = {0}".format(radius)) # imprime no terminal o raio da esfera
-        print("Sphere : colors = {0}".format(colors)) # imprime no terminal as cores
-
     @staticmethod
     def navigationInfo(headlight):
         """Características físicas do avatar do visualizador e do modelo de visualização."""
@@ -778,7 +756,6 @@ class GL:
         if headlight:
             GL.directionalLight(0.0, [1,1,1] , 1, [0, 0, -1])
         # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("NavigationInfo : headlight = {0}".format(headlight)) # imprime no terminal
 
     @staticmethod
     def directionalLight(ambientIntensity, color, intensity, direction):
@@ -817,12 +794,6 @@ class GL:
 
         GL.is_point_light = True
 
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("PointLight : ambientIntensity = {0}".format(ambientIntensity))
-        print("PointLight : color = {0}".format(color)) # imprime no terminal
-        print("PointLight : intensity = {0}".format(intensity)) # imprime no terminal
-        print("PointLight : location = {0}".format(location)) # imprime no terminal
-
     @staticmethod
     def fog(visibilityRange, color):
         """Névoa."""
@@ -850,10 +821,6 @@ class GL:
         # cycleInterval segundos. O valor de cycleInterval deve ser maior que zero.
 
         # Deve retornar a fração de tempo passada em fraction_changed
-
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("TimeSensor : cycleInterval = {0}".format(cycleInterval)) # imprime no terminal
-        print("TimeSensor : loop = {0}".format(loop))
 
         # Esse método já está implementado para os alunos como exemplo
         epoch = time.time()  # time in seconds since the epoch as a floating point number.
@@ -933,15 +900,6 @@ class GL:
 
                     break
 
-
-
-
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("SplinePositionInterpolator : set_fraction = {0}".format(set_fraction))
-        print("SplinePositionInterpolator : key = {0}".format(key)) # imprime no terminal
-        print("SplinePositionInterpolator : keyValue = {0}".format(keyValue))
-        print("SplinePositionInterpolator : closed = {0}".format(closed))
-
         # Abaixo está só um exemplo de como os dados podem ser calculados e transferidos
         value_changed = [1.0, 0.0, 0.0]
         return list(M_Vs)
@@ -963,6 +921,7 @@ class GL:
         for i in range(len(key)):
             valor = [keyValue[4*i], keyValue[4*i+1], keyValue[4*i+2], keyValue[4*i+3]]
             value.append(valor)
+            
 
         for i in range(len(key)-1):
                 if key[i+1] > set_fraction:
@@ -983,15 +942,8 @@ class GL:
                     resultT = deltaT * set_fraction + bT
 
 
-        #deltax / deltay = coeficiente angular
-
-        # O print abaixo é só para vocês verificarem o funcionamento, DEVE SER REMOVIDO.
-        print("OrientationInterpolator : set_fraction = {0}".format(set_fraction))
-        print("OrientationInterpolator : key = {0}".format(key)) # imprime no terminal
-        print("OrientationInterpolator : keyValue = {0}".format(keyValue))
 
         # Abaixo está só um exemplo de como os dados podem ser calculados e transferidos
-        value_changed = [0, 0, 1, 0]
         result = [resultX,resultY,resultZ,resultT]
         return result
 

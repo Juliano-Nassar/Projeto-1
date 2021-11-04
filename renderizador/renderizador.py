@@ -105,6 +105,24 @@ class Renderizador:
 
     def pos(self):
         """Rotinas pós renderização."""
+
+        # Anti Aliasing
+        n = 2 # Dimensão do pixel
+        h = self.height - n
+        w = self.width - n
+        for r in range(0,h,n):
+            for c in range(0,w,n):
+                media = gpu.GPU.read_pixels([c,r],gpu.GPU.RGB8)/(n*n)
+                # Pega a media
+                for i in range(n):
+                    for j in range(n):
+                        if i !=0 or j!=0:
+                            media+=gpu.GPU.read_pixels([c+j,r+i],gpu.GPU.RGB8)/(n*n)
+                media = list(media.astype('int8'))
+                for i in range(n):
+                    for j in range(n):
+                        gpu.GPU.draw_pixels([c+j,r+i],gpu.GPU.RGB8,media)
+
         # Função invocada após o processo de renderização terminar.
         # Método para a troca dos buffers (NÃO IMPLEMENTADO)
         gpu.GPU.swap_buffers()
